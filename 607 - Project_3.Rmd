@@ -1,0 +1,104 @@
+---
+title: "Project3 – Data Science Skills"
+author: "Karim Hammoud"
+date: "`r Sys.Date()`"
+output:
+  ioslides_presentation:
+    incremental: true
+    widescreen: true
+    smaller: true
+  openintro::lab_report: default
+---
+
+## Introduction
+The goal of this project is to predict the US presendential election.
+
+
+### What are the Most Valued Data Science Skills?
+
+Collaborating and the tream work is one of the valued data science skills, 
+
+
+### Communication:
+
+We used Github, OneDrive and Slack and Google meeting for collboration.
+
+## the source of the Data
+
+We obtained the data from https://projects.fivethirtyeight.com/2020-election-forecast/
+
+## Libraries
+```{r load-packages, message=FALSE}
+library(tidyverse)
+```
+
+## Loading the data
+
+The data is saved on Github
+```{r echo=TRUE}
+url <- "https://raw.githubusercontent.com/akarimhammoud/607-Project-3/master/presidential_national_toplines_2020.csv"
+polls <- read.csv(file = url, header = TRUE, sep = ",")
+head(polls)
+```
+
+
+## The Structure of the data
+
+```{r}
+str(polls)
+```
+
+## Data subset
+
+We create new framework
+
+```{r}
+nat_polls <- subset(polls, select = c(modeldate, candidate_inc, candidate_chal,
+             national_voteshare_inc, national_voteshare_chal))
+```
+
+## Data Mutate
+
+we genrate new column for
+
+```{r}
+
+colnames(nat_polls) <- c("date", "candidate_Trump", "candidate_Biden", "Trump_Percentage", "Biden_Percentage")
+nat_polls
+```
+
+## Trump Poll Percentage
+
+Data Visualization
+
+```{r}
+plot(nat_polls$Trump_Percentage, type = "b", frame = FALSE, pch = 20,
+     col = "red", xlab = "Days", ylab = "Percentage", 
+     main = "Trump Projection from June - September 2020",xlim = c(0,100))
+```
+
+## Biden Poll Percentage
+
+Data Visualization
+
+```{r}
+plot(nat_polls$Biden_Percentage, type = "b", frame = FALSE, pch = 20, 
+     col = "blue", xlab = "Days", ylab = "Percentage", 
+     main = "Biden Projection from June - September 2020",xlim = c(0,100))
+```
+
+## Both Candidates
+
+Data Visualization
+
+```{r}
+plot(nat_polls$Biden_Percentage, type="l", col="blue", lwd=2, xlab="Days",
+     ylab="Percentage", xlim = c(0,100), ylim = c(44,56))
+lines(nat_polls$Trump_Percentage, col="red", lwd=1)
+legend("topleft", legend=c("Trump_Percentage", "Biden_Percentage"),
+       col=c("red", "blue"), lty=1:1, cex=0.8)
+```
+
+## Conclusion
+
+In the past 100 days, the polls shows simillar projects for both candidates, for Trump its around 45% - 47%, on the other side Biden has between 52% - 53%.
