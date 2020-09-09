@@ -1,6 +1,6 @@
 ---
 title: "Project3 – Data Science Skills"
-author: "Karim Hammoud"
+author: "Team 1 – Karim Hammoud, Diego Correa and TJ Parker "
 date: "`r Sys.Date()`"
 output:
   ioslides_presentation:
