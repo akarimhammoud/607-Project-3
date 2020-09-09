@@ -16,12 +16,11 @@ The goal of this project is to predict the US presendential election.
 
 ### What are the Most Valued Data Science Skills?
 
-Collaborating and the tream work is one of the valued data science skills, 
 
 
 ### Communication:
 
-We used Github, OneDrive and Slack and Google meeting for collboration.
+We used Github, OneDrive, Slack, and Google meeting for collboration.
 
 ## the source of the Data
 
