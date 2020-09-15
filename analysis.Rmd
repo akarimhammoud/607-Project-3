@@ -13,7 +13,7 @@ output:
 
 ## Loading data
 
-```{r cars}
+```{r cars, message=FALSE}
 library(tidyverse, quietly = TRUE)
 
 #Presidential National Toplines
@@ -90,7 +90,7 @@ str(dfEI)
 
 ## Connecting and storing to db
 
-```{r}
+```{r message=FALSE}
 #storing the data in google cloud database
 library(RMySQL, quietly = TRUE)
 con <- dbConnect(MySQL(),
@@ -98,15 +98,11 @@ con <- dbConnect(MySQL(),
                  host = '35.225.135.85',
                  dbname = 'DATA607')
 
-summary(con)
-
 dbWriteTable(con, 'Presidential_National_Toplines', dfPNT, row.names = FALSE, overwrite = TRUE)
 dbWriteTable(con, 'Presidential_State_Toplines', dfPST, row.names = FALSE, overwrite = TRUE)
 dbWriteTable(con, 'Presidential_EV_Probabilities', dfPEP, row.names = FALSE, overwrite = TRUE)
 dbWriteTable(con, 'Presidential_Scenario_Analysis', dfPSA, row.names = FALSE, overwrite = TRUE)
 dbWriteTable(con, 'Economic_Index', dfEI, row.names = FALSE, overwrite = TRUE)
-
-dbListTables(con)
 ```
 
 ### Economic Index
@@ -152,17 +148,99 @@ probScenario <- ggplot(data = res) +
   geom_line(mapping = aes(modeldate, y = probability, color = scenario_description)) +
   theme(axis.text.x = element_text(angle = 70, hjust = 1))
 
-probScenario + scale_x_date(date_labels = '%m-%Y')
+probScenario + scale_x_date(date_labels = '%m-%Y') + scale_color_discrete(labels = function(x) str_wrap(x, width = 55))
 #not very pretty to look at
 ```
+## State Toplines
+
+Looking at red and blue states
+
+```{r}
+res <- dbGetQuery(con, 'select state, avg(winstate_inc) Inc from Presidential_State_Toplines group by state;')
+
+dfStateWin <- res
+
+library(usmap)
+
+plot_usmap(data = dfStateWin, values = 'Inc') + 
+  scale_fill_continuous(
+    low = 'blue', high = 'red', name = 'Projected Vote Outcomes'
+  ) + theme(legend.position = 'right')
+```
+
+```{r}
+res <- dbGetQuery(con, 'select state, avg(win_EC_if_win_state_inc
+) Inc, avg(win_EC_if_win_state_chal) Chal from Presidential_State_Toplines group by state;')
+
+dfStateInfluence <- res
+
+plot_usmap(data = dfStateInfluence, values = 'Inc') + 
+  scale_fill_continuous(
+    low = 'white', high = 'red', name = 'Projected Influence'
+  ) + theme(legend.position = 'right')
+
+plot_usmap(data = dfStateInfluence, values = 'Chal') + 
+  scale_fill_continuous(
+    low = 'white', high = 'blue', name = 'Projected Influence'
+  ) + theme(legend.position = 'right')
 
 
+```
+
+separating red and blue states based on average probability of winning state
+
+```{r}
+# Obtaining the average 
+res1 <- dbGetQuery(con, 'select state, round(avg(winstate_inc), 4) AVGWinStateInc, 
+                   case
+                   when avg(winstate_inc) > 0.5 then "Red"
+                   when avg (winstate_inc) < 0.5 then "Blue"
+                   else "Tie"
+                   end "Color"
+                   from Presidential_State_Toplines group by state;')
+
+redStates <- res1 %>% 
+  filter(Color == 'Red')
+redStates <- data.frame(redStates$state)
+colnames(redStates) <- 'states'
+
+blueStates <- res1 %>%
+  filter(Color == 'Blue')
+blueStates <- data.frame(blueStates$state)
+colnames(blueStates) <- 'states'
+
+dbWriteTable(con, 'redStates', redStates, overwrite = TRUE)
+dbWriteTable(con, 'blueStates', blueStates, overwrite = TRUE)
+```
+
+#### Voter Turnout by State
+
+
+
+
+```{r}
+res2 <- dbGetQuery(con, 'select state, state_turnout, "red" from Presidential_State_Toplines
+                          where state in (select states from redStates);')
+redTO <- res2
+names(redTO) <- c('state', 'turnout', 'state_color')
+  
+res3 <- dbGetQuery(con, 'select state, state_turnout, "blue" from Presidential_State_Toplines
+                          where state in (select states from blueStates);')
+blueTO <- res3
+names(blueTO) <- c('state', 'turnout', 'state_color')
+
+df1 <- rbind(redTO, blueTO)
+
+bp <- ggplot(data = df1, aes(x = state_color, y = turnout, fill = state_color)) +
+  geom_boxplot()
+
+bp + scale_fill_manual(values = c('blue', 'red'))
+```
 
 ## Presidential National Toplines
 
 
-contains the final national topline on each day.  
-Chances to win electoral votes (Biden in blue, Trump in red)
+contains the final national topline on each day.Chances to win electoral votes (Biden in blue, Trump in red)
 
 ```{r}
 res <- dbGetQuery(con, 'select modeldate, ecwin_inc, ecwin_chal from 
@@ -179,20 +257,7 @@ probEWin + scale_x_date(date_labels = '%m-%Y')
 
 
 ```
-## State Toplines
 
-
-```{r}
-res1 <- dbGetQuery(con, 'select modeldate, state, state_turnout, winstate_inc,
-                  winstate_chal, tipping from Presidential_State_Toplines;')
-
-res2 <- dbGetQuery(con, 'select state, avg(state_turnout) AVG_Turnout from Presidential_State_Toplines 
-                   group by state order by AVG_Turnout desc;')
-res2
-
-
-
-```
 
 
 
