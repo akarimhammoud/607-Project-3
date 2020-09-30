@@ -13,7 +13,7 @@ output:
 
 ## Loading data
 
-```{r cars}
+```{r cars, message=FALSE}
 library(tidyverse, quietly = TRUE)
 
 #Presidential National Toplines
@@ -59,6 +59,7 @@ the lubridate package.
 library(lubridate, quietly = TRUE)
 
 datetime.this <- function(df){
+  
   df$modeldate <- mdy(df$modeldate)
   
   df$timestamp <- str_replace_all(df$timestamp, ' {2}', ' ')
@@ -90,7 +91,7 @@ str(dfEI)
 
 ## Connecting and storing to db
 
-```{r}
+```{r message=FALSE}
 #storing the data in google cloud database
 library(RMySQL, quietly = TRUE)
 con <- dbConnect(MySQL(),
@@ -98,15 +99,11 @@ con <- dbConnect(MySQL(),
                  host = '35.225.135.85',
                  dbname = 'DATA607')
 
-summary(con)
-
 dbWriteTable(con, 'Presidential_National_Toplines', dfPNT, row.names = FALSE, overwrite = TRUE)
 dbWriteTable(con, 'Presidential_State_Toplines', dfPST, row.names = FALSE, overwrite = TRUE)
 dbWriteTable(con, 'Presidential_EV_Probabilities', dfPEP, row.names = FALSE, overwrite = TRUE)
 dbWriteTable(con, 'Presidential_Scenario_Analysis', dfPSA, row.names = FALSE, overwrite = TRUE)
 dbWriteTable(con, 'Economic_Index', dfEI, row.names = FALSE, overwrite = TRUE)
-
-dbListTables(con)
 ```
 
 ### Economic Index
@@ -152,17 +149,95 @@ probScenario <- ggplot(data = res) +
   geom_line(mapping = aes(modeldate, y = probability, color = scenario_description)) +
   theme(axis.text.x = element_text(angle = 70, hjust = 1))
 
-probScenario + scale_x_date(date_labels = '%m-%Y')
+probScenario + scale_x_date(date_labels = '%m-%Y') + scale_color_discrete(labels = function(x) str_wrap(x, width = 65))
 #not very pretty to look at
+```
+## State Toplines
+
+Looking at red and blue states
+
+```{r}
+res <- dbGetQuery(con, 'select state, avg(winstate_inc) Inc from Presidential_State_Toplines group by state;')
+
+dfStateWin <- res
+
+library(usmap)
+
+plot_usmap(data = dfStateWin, values = 'Inc') + 
+  scale_fill_gradient2(
+    low = 'blue', high = 'red', mid = 'white', midpoint = .5, limit = c(0,1),
+    name = 'Projected Vote Outcomes'
+  ) + theme(legend.position = 'right') +
+  labs(title = 'Projected Red and Blue States')
 ```
 
 
 
+
+
+#### Voter Turnout by State
+
+separating red and blue states based on average probability of winning state
+
+```{r}
+res_state <- dbGetQuery(con, 'select * from Presidential_State_Toplines;')
+
+red_states <- res_state %>%
+  group_by(state) %>%
+  summarize(avg_winstate_inc = round(mean(winstate_inc, na.rm = TRUE), 3)) %>%
+  filter(avg_winstate_inc >= 0.5) %>%
+  select(state)
+
+red_state_turnout <- res_state %>%
+  semi_join(red_states) %>%
+  group_by(state) %>%
+  summarize(avg_state_turnout = mean(state_turnout, na.rm = TRUE))
+
+blue_state_turnout <- res_state %>%
+  anti_join(red_states) %>%
+  group_by(state) %>%
+  summarize(avg_state_turnout = mean(state_turnout, na.rm = TRUE))
+
+red_state_turnout['state_color'] <- 'red'
+blue_state_turnout['state_color'] <- 'blue'
+
+
+df1 <- rbind(red_state_turnout, blue_state_turnout)
+
+bp <- ggplot(data = df1, aes(x = state_color, y = avg_state_turnout, fill = state_color)) +
+  geom_boxplot() +
+  labs(title = 'Projected Turnout of Red & Blue States', subtitle = 'Boxplot')
+
+bp + scale_fill_manual(values = c('blue', 'red'))
+
+den <- ggplot(data = df1, aes(x = avg_state_turnout, fill = state_color)) +
+  geom_density(alpha = 0.4)
+
+den + scale_fill_manual(values = c('blue', 'red')) +
+  labs(title = 'Projected Turnout of Red & Blue States', subtitle = 'Density')
+
+
+# biggest influence - win EC if win state
+states_influence <- res_state %>%
+  mutate(total_EC_influence = win_EC_if_win_state_inc + win_state_if_win_EC_chal) %>% 
+  group_by(state) %>%
+  summarize(avg_EC_Influence = mean(total_EC_influence, na.rm = TRUE)) %>%
+  arrange(desc(avg_EC_Influence))
+
+
+plot_usmap(data = states_influence, values = 'avg_EC_Influence') + 
+  scale_fill_gradient2(
+    low = 'white', high = 'purple', name = 'Wins EC if Wins State Prob'
+  ) + theme(legend.position = 'right') +
+  labs(title = 'Wins EC if Wins State Prob')
+
+  
+```
+
 ## Presidential National Toplines
 
 
-contains the final national topline on each day.  
-Chances to win electoral votes (Biden in blue, Trump in red)
+contains the final national topline on each day.Chances to win electoral votes (Biden in blue, Trump in red)
 
 ```{r}
 res <- dbGetQuery(con, 'select modeldate, ecwin_inc, ecwin_chal from 
@@ -175,23 +250,74 @@ probEWin <- ggplot(data = res) +
   geom_line(mapping = aes(x = modeldate, y = ecwin_chal), color = 'blue') +
   theme(axis.text.x =  element_text(angle = 70, hjust = 1))
 
-probEWin + scale_x_date(date_labels = '%m-%Y')
+probEWin + scale_x_date(date_labels = '%m-%Y') +
+  labs(title = 'Probability of Incumbent & Challenger Winning Election' , y = 'probability')
 
 
 ```
-## State Toplines
-
 
 ```{r}
-res1 <- dbGetQuery(con, 'select modeldate, state, state_turnout, winstate_inc,
-                  winstate_chal, tipping from Presidential_State_Toplines;')
+res_nat <- dbGetQuery(con, 'select * from Presidential_National_Toplines;')
 
-res2 <- dbGetQuery(con, 'select state, avg(state_turnout) AVG_Turnout from Presidential_State_Toplines 
-                   group by state order by AVG_Turnout desc;')
-res2
+col  <- colnames(res_nat)
+chal_col <- str_match(col, '.*chal.*')
+chal_col <- chal_col[!is.na(chal_col)]
+
+dfChal <- res_nat[, chal_col[2:length(chal_col)]]
+
+chal_cormatrix <- round(cor(dfChal), 2)
+
+#new library
+library(reshape2, quietly = TRUE)
 
 
+get_upper_tri <- function(cormatrix){
+  cormatrix[lower.tri(cormatrix)] <- NA
+  return(cormatrix)
+}
 
+reorder_cormatrix <- function(cormatrix){
+  dd <- as.dist((1 - cormatrix) / 2)
+  hc <- hclust(dd)
+  cormatrix <- cormatrix[hc$order, hc$order]
+}
+
+chal_cormatrix <- reorder_cormatrix(chal_cormatrix)
+chal_upper_triangle <- get_upper_tri(chal_cormatrix)
+
+chal_melted_cormatrix <- melt(chal_upper_triangle, na.rm = TRUE)
+
+ggplot(data = chal_melted_cormatrix, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = 'white') +
+  scale_fill_gradient2(low = 'blue', high = 'red', mid = 'white', 
+                       midpoint = 0, limit = c(-1,1), space = 'Lab') +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 70, hjust = 1)) +
+  coord_fixed() +
+  labs(title = 'Covariance of Challenger Measures')
+
+
+inc_col <- str_match(col, '.*inc.*')
+inc_col <- inc_col[!is.na(inc_col)]
+
+dfInc <- res_nat[, inc_col[2:length(inc_col)]]
+
+
+inc_cormatrix <- round(cor(dfInc), 2)
+
+inc_cormatrix <- reorder_cormatrix(inc_cormatrix)
+inc_upper_triangle <- get_upper_tri(inc_cormatrix)
+
+inc_melted_cormatrix <- melt(inc_upper_triangle, na.rm = TRUE)
+
+ggplot(data = inc_melted_cormatrix, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = 'white') +
+  scale_fill_gradient2(low = 'blue', high = 'red', mid = 'white', 
+                       midpoint = 0, limit = c(-1,1), space = 'Lab') +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 70, hjust = 1)) +
+  coord_fixed() + 
+  labs(title = 'Covariance of Incumbent Measures')
 ```
 
 
