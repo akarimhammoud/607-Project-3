@@ -149,11 +149,7 @@ probScenario <- ggplot(data = res) +
   geom_line(mapping = aes(modeldate, y = probability, color = scenario_description)) +
   theme(axis.text.x = element_text(angle = 70, hjust = 1))
 
-<<<<<<< Updated upstream
-probScenario + scale_x_date(date_labels = '%m-%Y') + scale_color_discrete(labels = function(x) str_wrap(x, width = 55))
-=======
 probScenario + scale_x_date(date_labels = '%m-%Y') + scale_color_discrete(labels = function(x) str_wrap(x, width = 65))
->>>>>>> Stashed changes
 #not very pretty to look at
 ```
 ## State Toplines
@@ -168,31 +164,6 @@ dfStateWin <- res
 library(usmap)
 
 plot_usmap(data = dfStateWin, values = 'Inc') + 
-<<<<<<< Updated upstream
-  scale_fill_continuous(
-    low = 'blue', high = 'red', name = 'Projected Vote Outcomes'
-  ) + theme(legend.position = 'right')
-```
-
-```{r}
-res <- dbGetQuery(con, 'select state, avg(win_EC_if_win_state_inc
-) Inc, avg(win_EC_if_win_state_chal) Chal from Presidential_State_Toplines group by state;')
-
-dfStateInfluence <- res
-
-plot_usmap(data = dfStateInfluence, values = 'Inc') + 
-  scale_fill_continuous(
-    low = 'white', high = 'red', name = 'Projected Influence'
-  ) + theme(legend.position = 'right')
-
-plot_usmap(data = dfStateInfluence, values = 'Chal') + 
-  scale_fill_continuous(
-    low = 'white', high = 'blue', name = 'Projected Influence'
-  ) + theme(legend.position = 'right')
-
-
-```
-=======
   scale_fill_gradient2(
     low = 'blue', high = 'red', mid = 'white', midpoint = .5, limit = c(0,1),
     name = 'Projected Vote Outcomes'
@@ -205,53 +176,10 @@ plot_usmap(data = dfStateInfluence, values = 'Chal') +
 
 
 #### Voter Turnout by State
->>>>>>> Stashed changes
 
 separating red and blue states based on average probability of winning state
 
 ```{r}
-<<<<<<< Updated upstream
-# Obtaining the average 
-res1 <- dbGetQuery(con, 'select state, round(avg(winstate_inc), 4) AVGWinStateInc, 
-                   case
-                   when avg(winstate_inc) > 0.5 then "Red"
-                   when avg (winstate_inc) < 0.5 then "Blue"
-                   else "Tie"
-                   end "Color"
-                   from Presidential_State_Toplines group by state;')
-
-redStates <- res1 %>% 
-  filter(Color == 'Red')
-redStates <- data.frame(redStates$state)
-colnames(redStates) <- 'states'
-
-blueStates <- res1 %>%
-  filter(Color == 'Blue')
-blueStates <- data.frame(blueStates$state)
-colnames(blueStates) <- 'states'
-
-dbWriteTable(con, 'redStates', redStates, overwrite = TRUE)
-dbWriteTable(con, 'blueStates', blueStates, overwrite = TRUE)
-```
-
-#### Voter Turnout by State
-
-
-
-
-```{r}
-res2 <- dbGetQuery(con, 'select state, state_turnout, "red" from Presidential_State_Toplines
-                          where state in (select states from redStates);')
-redTO <- res2
-names(redTO) <- c('state', 'turnout', 'state_color')
-  
-res3 <- dbGetQuery(con, 'select state, state_turnout, "blue" from Presidential_State_Toplines
-                          where state in (select states from blueStates);')
-blueTO <- res3
-names(blueTO) <- c('state', 'turnout', 'state_color')
-
-df1 <- rbind(redTO, blueTO)
-=======
 res_state <- dbGetQuery(con, 'select * from Presidential_State_Toplines;')
 
 red_states <- res_state %>%
@@ -287,16 +215,9 @@ den <- ggplot(data = df1, aes(x = avg_state_turnout, fill = state_color)) +
 
 den + scale_fill_manual(values = c('blue', 'red')) +
   labs(title = 'Projected Turnout of Red & Blue States', subtitle = 'Density')
->>>>>>> Stashed changes
 
-bp <- ggplot(data = df1, aes(x = state_color, y = turnout, fill = state_color)) +
-  geom_boxplot()
 
-bp + scale_fill_manual(values = c('blue', 'red'))
-```
-
-str(res_state)
-
+# biggest influence - win EC if win state
 states_influence <- res_state %>%
   mutate(total_EC_influence = win_EC_if_win_state_inc + win_state_if_win_EC_chal) %>% 
   group_by(state) %>%
@@ -334,14 +255,12 @@ probEWin + scale_x_date(date_labels = '%m-%Y') +
 
 
 ```
-<<<<<<< Updated upstream
-=======
 
 ```{r}
 res_nat <- dbGetQuery(con, 'select * from Presidential_National_Toplines;')
 
-col <- colnames(res)
-chal_col <- str_match(col1, '.*chal.*')
+col  <- colnames(res_nat)
+chal_col <- str_match(col, '.*chal.*')
 chal_col <- chal_col[!is.na(chal_col)]
 
 dfChal <- res_nat[, chal_col[2:length(chal_col)]]
@@ -357,7 +276,7 @@ get_upper_tri <- function(cormatrix){
   return(cormatrix)
 }
 
-chal_reorder_cormatrix <- function(cormatrix){
+reorder_cormatrix <- function(cormatrix){
   dd <- as.dist((1 - cormatrix) / 2)
   hc <- hclust(dd)
   cormatrix <- cormatrix[hc$order, hc$order]
@@ -378,7 +297,7 @@ ggplot(data = chal_melted_cormatrix, aes(x = Var1, y = Var2, fill = value)) +
   labs(title = 'Covariance of Challenger Measures')
 
 
-inc_col <- str_match(col1, '.*inc.*')
+inc_col <- str_match(col, '.*inc.*')
 inc_col <- inc_col[!is.na(inc_col)]
 
 dfInc <- res_nat[, inc_col[2:length(inc_col)]]
@@ -399,9 +318,7 @@ ggplot(data = inc_melted_cormatrix, aes(x = Var1, y = Var2, fill = value)) +
   theme(axis.text.x = element_text(angle = 70, hjust = 1)) +
   coord_fixed() + 
   labs(title = 'Covariance of Incumbent Measures')
-
->>>>>>> Stashed changes
-
+```
 
 
 
