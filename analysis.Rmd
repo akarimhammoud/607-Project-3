@@ -238,7 +238,7 @@ den <- ggplot(data = df1, aes(x = avg_state_turnout, fill = state_color)) +
 den + scale_fill_manual(values = c('blue', 'red')) +
   labs(title = 'Projected Turnout of Red & Blue States', subtitle = 'Density')
 ```
-# States with the Most Influence
+## States with the Most Influence
 
 To find the answer to this, I added two columns found in the Presidential_State_Toplines table,
 "win_EC_if_win_state_inc" & "win_EC_if_win_state_chal".
