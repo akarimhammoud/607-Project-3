@@ -1,0 +1,38 @@
+﻿# column_name,data_type,description
+cycle,bigint,The election cycle (2020)
+branch,text,The kind of race this forecast pertains to (presidential)
+model,text,The model type (polls-plus is the only model we are running for the 2020 presidential race)
+modeldate,text,Date of the model run
+candidate_inc,text,Name of the incumbent
+candidate_chal,text,Name of the challenger
+candidate_3rd,tinyint,Name of the third-party candidate
+ecwin_inc,double,Chance that the incumbent will win a majority of the electoral votes
+ecwin_chal,double,Chance that the challenger will win a majority of the electoral votes
+ecwin_3rd,tinyint,Chance that the third-party candidate will win a majority of the electoral votes
+ec_nomajority,double,Chance that no candidate will win a majority of the electoral votes
+popwin_inc,double,Chance that the incumbent will win the popular vote
+popwin_chal,double,Chance that the challenger will win the popular vote
+popwin_3rd,tinyint,Chance that a third-party candidate will win the popular vote
+ev_inc,double,"Forecasted number of Electoral College votes for the incumbent, including the upper and lower bounds of an 80% confidence interval"
+ev_chal,double,"Forecasted number of Electoral College votes for the challenger, including the upper and lower bounds of an 80% confidence interval"
+ev_3rd,tinyint,"Forecasted number of Electoral College votes for the third-party candidate, including the upper and lower bounds of an 80% confidence interval"
+ev_inc_hi,bigint,"Forecasted number of Electoral College votes for the incumbent, including the upper and lower bounds of an 80% confidence interval"
+ev_chal_hi,double,"Forecasted number of Electoral College votes for the challenger, including the upper and lower bounds of an 80% confidence interval"
+ev_3rd_hi,tinyint,"Forecasted number of Electoral College votes for the third-party candidate, including the upper and lower bounds of an 80% confidence interval"
+ev_inc_lo,double,"Forecasted number of Electoral College votes for the incumbent, including the upper and lower bounds of an 80% confidence interval"
+ev_chal_lo,bigint,"Forecasted number of Electoral College votes for the challenger, including the upper and lower bounds of an 80% confidence interval"
+ev_3rd_lo,tinyint,"Forecasted number of Electoral College votes for the third-party candidate, including the upper and lower bounds of an 80% confidence interval"
+national_voteshare_inc,double,"Forecasted national vote share for the incumbent, including the upper and lower bounds of an 80% confidence interval"
+national_voteshare_chal,double,"Forecasted national vote share for the challenger, including the upper and lower bounds of an 80% confidence interval"
+national_voteshare_3rd,tinyint,"Forecasted national vote share for the third-party candidate, including the upper and lower bounds of an 80% confidence interval"
+nat_voteshare_other,double,"Forecasted national voter turnout based on past turnout, estimates of population growth, polls about whether voters are more or less enthusiastic about the election than usual and other factors in each state. Includes the upper and lower bounds of an 80% confidence interval."
+national_voteshare_inc_hi,double,"Forecasted national vote share for the incumbent, including the upper and lower bounds of an 80% confidence interval"
+national_voteshare_chal_hi,double,"Forecasted national vote share for the challenger, including the upper and lower bounds of an 80% confidence interval"
+national_voteshare_3rd_hi,tinyint,"Forecasted national vote share for the third-party candidate, including the upper and lower bounds of an 80% confidence interval"
+nat_voteshare_other_hi,double,"Forecasted national voter turnout based on past turnout, estimates of population growth, polls about whether voters are more or less enthusiastic about the election than usual and other factors in each state. Includes the upper and lower bounds of an 80% confidence interval."
+national_voteshare_inc_lo,double,"Forecasted national vote share for the incumbent, including the upper and lower bounds of an 80% confidence interval"
+national_voteshare_chal_lo,double,"Forecasted national vote share for the challenger, including the upper and lower bounds of an 80% confidence interval"
+national_voteshare_3rd_lo,tinyint,"Forecasted national vote share for the third-party candidate, including the upper and lower bounds of an 80% confidence interval"
+nat_voteshare_other_lo,double,"Forecasted national voter turnout based on past turnout, estimates of population growth, polls about whether voters are more or less enthusiastic about the election than usual and other factors in each state. Includes the upper and lower bounds of an 80% confidence interval."
+timestamp,text,Date and time the simulations were run
+simulations,bigint,Number of simulations run
